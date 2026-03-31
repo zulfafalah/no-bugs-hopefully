@@ -242,7 +242,7 @@ def echo(request):
     }
 )
 @api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def book_list(request):
     """
     GET: List all books (supports filtering by author and pagination)
@@ -373,7 +373,7 @@ def book_list(request):
     }
 )
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def book_detail(request, book_id):
     """
     GET: Retrieve a specific book
