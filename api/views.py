@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     BookSerializer, 
     BookCreateUpdateSerializer,
@@ -16,6 +17,71 @@ from .serializers import (
 # In-memory storage for books
 BOOKS = {}
 BOOK_ID_COUNTER = 1
+
+
+@extend_schema(
+    summary="Obtain JWT Token",
+    description="""
+    Authenticate and obtain JWT access and refresh tokens.
+    
+    **Default Credentials for Testing:**
+    - Username: `admin`
+    - Password: `password`
+    
+    Use the access token in the Authorization header as: `Bearer <access_token>`
+    """,
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'username': {
+                    'type': 'string',
+                    'example': 'admin'
+                },
+                'password': {
+                    'type': 'string',
+                    'example': 'password'
+                }
+            },
+            'required': ['username', 'password']
+        }
+    },
+    examples=[
+        OpenApiExample(
+            'Example Login',
+            value={
+                'username': 'admin',
+                'password': 'password'
+            },
+            request_only=True,
+        )
+    ],
+    responses={
+        200: {
+            'description': 'Successful authentication',
+            'content': {
+                'application/json': {
+                    'example': {
+                        'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                        'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'
+                    }
+                }
+            }
+        },
+        401: {
+            'description': 'Invalid credentials'
+        }
+    }
+)
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom JWT token view with API documentation.
+    
+    Default test credentials:
+    - username: admin
+    - password: password
+    """
+    pass
 
 
 @extend_schema(

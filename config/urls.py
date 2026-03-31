@@ -16,9 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import ping, echo, book_list, book_detail
+from api.views import ping, echo, book_list, book_detail, CustomTokenObtainPairView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,7 +26,7 @@ urlpatterns = [
     path('api/echo', echo, name='echo'),
     
     # JWT Authentication endpoints
-    path('auth/token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
     
     # Book CRUD endpoints
