@@ -22,16 +22,16 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/ping', ping, name='ping'),
-    path('api/echo', echo, name='echo'),
+    path('ping', ping, name='ping'),
+    path('echo', echo, name='echo'),
     
     # JWT Authentication endpoints
     path('auth/token', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
     
     # Book CRUD endpoints
-    path('api/books', book_list, name='book-list'),
-    path('api/book/<int:book_id>', book_detail, name='book-detail'),
+    path('books', book_list, name='book-list'),
+    path('books/<int:book_id>', book_detail, name='book-detail'),
 
     # API documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
