@@ -7,7 +7,7 @@ class BookSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=True)
     author = serializers.CharField(max_length=255, required=True)
     description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
-    published_year = serializers.IntegerField(required=False, allow_null=True)
+    year = serializers.IntegerField(required=False, allow_null=True)
 
 
 class BookCreateUpdateSerializer(serializers.Serializer):
@@ -15,7 +15,7 @@ class BookCreateUpdateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=True)
     author = serializers.CharField(max_length=255, required=True)
     description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
-    published_year = serializers.IntegerField(required=False, allow_null=True)
+    year = serializers.IntegerField(required=False, allow_null=True)
 
 
 class BookPartialUpdateSerializer(serializers.Serializer):
@@ -23,7 +23,7 @@ class BookPartialUpdateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=False, help_text="Book title")
     author = serializers.CharField(max_length=255, required=False, help_text="Book author")
     description = serializers.CharField(max_length=1000, required=False, allow_blank=True, help_text="Book description")
-    published_year = serializers.IntegerField(required=False, allow_null=True, help_text="Year of publication")
+    year = serializers.IntegerField(required=False, allow_null=True, help_text="Year of publication")
 
 
 class EchoRequestSerializer(serializers.Serializer):
