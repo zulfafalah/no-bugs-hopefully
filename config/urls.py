@@ -16,13 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import ping, echo
+from api.views import ping, echo, book_list, book_detail
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/ping', ping, name='ping'),
     path('api/echo', echo, name='echo'),
+    
+    # Book CRUD endpoints
+    path('api/book', book_list, name='book-list'),
+    path('api/book/<int:book_id>', book_detail, name='book-detail'),
+
     # API documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
