@@ -110,10 +110,7 @@ def echo(request):
     """
     Echo endpoint that returns the same data sent in the request
     """
-    return Response({
-        'data': request.data,
-        'status': 'success'
-    }, status=status.HTTP_200_OK)
+    return Response(request.data, status=status.HTTP_200_OK)
 
 
 @extend_schema(
