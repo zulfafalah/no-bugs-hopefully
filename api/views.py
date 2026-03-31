@@ -54,7 +54,30 @@ def echo(request):
 @extend_schema(
     methods=['GET'],
     summary="List all books",
-    description="Get a list of all books in the collection",
+    description="Get a list of all books in the collection. Supports filtering by author and pagination.",
+    parameters=[
+        OpenApiParameter(
+            name='author',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description='Filter books by author name (case-insensitive partial match)',
+            required=False
+        ),
+        OpenApiParameter(
+            name='page',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.QUERY,
+            description='Page number for pagination (starts from 1)',
+            required=False
+        ),
+        OpenApiParameter(
+            name='limit',
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.QUERY,
+            description='Number of items per page',
+            required=False
+        ),
+    ],
     responses={200: BookSerializer(many=True)}
 )
 @extend_schema(
@@ -91,16 +114,55 @@ def echo(request):
 @permission_classes([IsAuthenticated])
 def book_list(request):
     """
-    GET: List all books
+    GET: List all books (supports filtering by author and pagination)
     POST: Create a new book
     """
     global BOOK_ID_COUNTER
     
     if request.method == 'GET':
         books = list(BOOKS.values())
+        
+        # Filter by author if provided
+        author_filter = request.query_params.get('author', None)
+        if author_filter:
+            books = [book for book in books if author_filter.lower() in book['author'].lower()]
+        
+        total_count = len(books)
+        # Pagination
+        page = request.query_params.get('page', None)
+        limit = request.query_params.get('limit', None)
+        
+        if page is not None and limit is not None:
+            try:
+                page = int(page)
+                limit = int(limit)
+                
+                if page < 1:
+                    page = 1
+                if limit < 1:
+                    limit = 1
+                
+                start_index = (page - 1) * limit
+                end_index = start_index + limit
+                
+                books = books[start_index:end_index]
+                
+                return Response({
+                    'data': books,
+                    'page': page,
+                    'limit': limit,
+                    'total': total_count,
+                    'status': 'success'
+                }, status=status.HTTP_200_OK)
+            except ValueError:
+                return Response({
+                    'error': 'Invalid pagination parameters. Page and limit must be integers.',
+                    'status': 'error'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
         return Response({
             'data': books,
-            'count': len(books),
+            'total': total_count,
             'status': 'success'
         }, status=status.HTTP_200_OK)
     
