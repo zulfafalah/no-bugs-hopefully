@@ -18,14 +18,19 @@ from django.contrib import admin
 from django.urls import path
 from api.views import ping, echo, book_list, book_detail
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/ping', ping, name='ping'),
     path('api/echo', echo, name='echo'),
     
+    # JWT Authentication endpoints
+    path('auth/token', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
+    
     # Book CRUD endpoints
-    path('api/book', book_list, name='book-list'),
+    path('api/books', book_list, name='book-list'),
     path('api/book/<int:book_id>', book_detail, name='book-detail'),
 
     # API documentation
