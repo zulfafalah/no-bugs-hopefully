@@ -258,6 +258,15 @@ def book_list(request):
         if author_filter:
             books = [book for book in books if author_filter.lower() in book['author'].lower()]
         
+        # Pagination
+        page = request.query_params.get('page', None)
+        limit = request.query_params.get('limit', None)
+        if page is not None and limit is not None:
+            page = int(page)
+            limit = int(limit)
+            start = (page - 1) * limit
+            books = books[start:start + limit]
+        
         # Return just the array of books for basic tests
         return Response(books, status=status.HTTP_200_OK)
     
