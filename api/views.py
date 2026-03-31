@@ -1,10 +1,15 @@
+import jwt as pyjwt
+from datetime import datetime, timedelta, timezone
+
+from django.conf import settings as django_settings
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.exceptions import AuthenticationFailed
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
-from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     BookSerializer, 
     BookCreateUpdateSerializer,
@@ -62,8 +67,9 @@ BOOK_ID_COUNTER = 1
             'content': {
                 'application/json': {
                     'example': {
-                        'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
-                        'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'
+                        'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                        'access': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...',
+                        'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...'
                     }
                 }
             }
@@ -73,15 +79,78 @@ BOOK_ID_COUNTER = 1
         }
     }
 )
-class CustomTokenObtainPairView(TokenObtainPairView):
+class CustomTokenObtainPairView(APIView):
     """
-    Custom JWT token view with API documentation.
+    Custom JWT token view that validates hardcoded credentials.
+    No database user required.
     
     Default test credentials:
     - username: admin
     - password: password
     """
-    pass
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if username == 'admin' and password == 'password':
+            now = datetime.now(timezone.utc)
+            access_payload = {
+                'user_id': 1,
+                'username': 'admin',
+                'exp': now + timedelta(hours=1),
+                'iat': now,
+                'token_type': 'access',
+            }
+            refresh_payload = {
+                'user_id': 1,
+                'username': 'admin',
+                'exp': now + timedelta(days=1),
+                'iat': now,
+                'token_type': 'refresh',
+            }
+            access = pyjwt.encode(access_payload, django_settings.SECRET_KEY, algorithm='HS256')
+            refresh = pyjwt.encode(refresh_payload, django_settings.SECRET_KEY, algorithm='HS256')
+            return Response({
+                'token': access,
+                'access': access,
+                'refresh': refresh,
+            })
+
+        return Response(
+            {'detail': 'No active account found with the given credentials'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+
+class CustomTokenRefreshView(APIView):
+    """Refresh an access token using a refresh token."""
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({'detail': 'Refresh token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            payload = pyjwt.decode(refresh_token, django_settings.SECRET_KEY, algorithms=['HS256'])
+            if payload.get('token_type') != 'refresh':
+                raise AuthenticationFailed('Invalid token type')
+            now = datetime.now(timezone.utc)
+            access_payload = {
+                'user_id': payload.get('user_id'),
+                'username': payload.get('username'),
+                'exp': now + timedelta(hours=1),
+                'iat': now,
+                'token_type': 'access',
+            }
+            access = pyjwt.encode(access_payload, django_settings.SECRET_KEY, algorithm='HS256')
+            return Response({'access': access})
+        except pyjwt.InvalidTokenError:
+            return Response({'detail': 'Invalid or expired refresh token.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @extend_schema(
@@ -173,6 +242,7 @@ def echo(request):
     }
 )
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def book_list(request):
     """
     GET: List all books (supports filtering by author and pagination)
@@ -294,6 +364,7 @@ def book_list(request):
     }
 )
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def book_detail(request, book_id):
     """
     GET: Retrieve a specific book
