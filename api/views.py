@@ -95,8 +95,7 @@ def ping(request):
     Simple ping endpoint to check if the API is running
     """
     return Response({
-        'message': 'pong',
-        'status': 'success'
+        'success': True
     }, status=status.HTTP_200_OK)
 
 
